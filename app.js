@@ -10,6 +10,7 @@
     theme: 'original-warm',
     effectPetals: true,
     effectCurtain: true,
+    curtainOpened: false,
     metaTitle: '신랑 ♥ 신부의 모바일 청첩장',
     metaDesc: '소중한 분들을 초대합니다. 꼭 오셔서 축하해 주세요.',
     
@@ -106,10 +107,12 @@
     });
 
     $('#btn-reset-curtain').addEventListener('click', () => {
+      state.curtainOpened = false;
       const iframe = $('#preview-iframe');
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({ action: 'reset-curtain' }, '*');
       }
+      updatePreview(true);
     });
   }
 
@@ -561,13 +564,34 @@
     const galleryImgs = (data.images.gallery || []).filter(img => !isPlaceholder(img));
     const locationImg = isPlaceholder(data.images.location) ? "" : data.images.location;
 
-    const groomAcc = mapAccounts(data.groom.accounts, data.groom.name, data.groom.father, data.groom.mother);
-    const brideAcc = mapAccounts(data.bride.accounts, data.bride.name, data.bride.father, data.bride.mother);
+    const groomFullName = data.groom.name || "";
+    const groomLastName = groomFullName.charAt(0);
+    const groomName = groomFullName.substring(1);
+
+    const brideFullName = data.bride.name || "";
+    const brideLastName = brideFullName.charAt(0);
+    const brideName = brideFullName.substring(1);
+
+    let dayOfWeek = "";
+    if (data.wedding.date) {
+      const days = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+      const d = new Date(data.wedding.date);
+      if (!isNaN(d.getTime())) {
+        dayOfWeek = days[d.getDay()];
+      }
+    }
+
+    const groomAcc = mapAccounts(data.groom.accounts, groomFullName, data.groom.father, data.groom.mother);
+    const brideAcc = mapAccounts(data.bride.accounts, brideFullName, data.bride.father, data.bride.mother);
+
+    const isPreview = !document.body.classList.contains('guest-view');
 
     const configObj = {
-      useCurtain: data.effectCurtain,
+      useCurtain: isPreview ? (data.effectCurtain && !state.curtainOpened) : data.effectCurtain,
       groom: {
-        name: data.groom.name,
+        name: groomFullName,
+        lastName: groomLastName,
+        fullName: groomFullName,
         nameEn: "Groom",
         father: data.groom.father,
         mother: data.groom.mother,
@@ -575,7 +599,9 @@
         motherDeceased: data.groom.motherDeceased
       },
       bride: {
-        name: data.bride.name,
+        name: brideFullName,
+        lastName: brideLastName,
+        fullName: brideFullName,
         nameEn: "Bride",
         father: data.bride.father,
         mother: data.bride.mother,
@@ -585,6 +611,7 @@
       wedding: {
         date: data.wedding.date,
         time: data.wedding.time,
+        dayOfWeek: dayOfWeek,
         venue: data.wedding.venue,
         hall: "",
         address: data.wedding.address,
@@ -624,7 +651,15 @@
     html = html.replace(/<script src="config.js"><\/script>/i, () => `<script>const CONFIG = ${JSON.stringify(configObj)};</script>`);
 
     // 2. CSS 인라인화 및 경로 수정
-    const resolvedCss = css.replace(/url\((['"]?)images\//g, `url($1${pathPrefix}images/`);
+    let resolvedCss = css.replace(/url\((['"]?)images\//g, `url($1${pathPrefix}images/`);
+    resolvedCss += `
+      /* 이름 한 줄 노출 보장 및 반응형 크기 조절 */
+      .hero__names, .curtain__names, #hero-names, #curtain-names, #heroNames, #curtainNames, .hero-names, .curtain-names {
+        white-space: nowrap !important;
+        font-size: clamp(1.3rem, 5.5vw, 2rem) !important;
+        letter-spacing: clamp(2px, 1.5vw, 8px) !important;
+      }
+    `;
     html = html.replace(/<link rel="stylesheet" href="styles.css">/i, () => `<style>${resolvedCss}</style>`);
 
     // 3. JS 인라인화 및 이미지 감지 가로채기
@@ -648,6 +683,29 @@
       .replace(/'images\/og\/1\.jpg'/g, `(CONFIG.images.og || '${pathPrefix}images/og/1.jpg')`)
       .replace(/"images\/og\/1\.jpg"/g, `(CONFIG.images.og || '${pathPrefix}images/og/1.jpg')`)
       .replace(/`images\/\${folder}\/\${current}\.jpg`/g, `\`\${CONFIG.images[folder] && CONFIG.images[folder][current-1] ? CONFIG.images[folder][current-1] : '${pathPrefix}images/' + folder + '/' + current + '.jpg' }\``);
+
+    patchedJs += `
+      // 부모 창에 커튼 오픈 상태 전달
+      document.addEventListener('DOMContentLoaded', () => {
+        const sendOpened = () => {
+          if (window.parent) {
+            window.parent.postMessage({ action: 'curtain-opened' }, '*');
+          }
+        };
+
+        // 버튼 클릭 시 이벤트 전송
+        const curtainBtns = document.querySelectorAll('#curtainBtn, #curtain-open, .curtain__btn, .curtain-btn');
+        curtainBtns.forEach(btn => {
+          btn.addEventListener('click', sendOpened);
+        });
+
+        // 웜 테마 등 버튼 없이 일정 시간 후 자동 오프닝 감지
+        const warmOverlay = document.getElementById('curtainOverlay');
+        if (warmOverlay) {
+          setTimeout(sendOpened, 2500);
+        }
+      });
+    `;
 
     html = html.replace(/<script src="script.js"><\/script>/i, () => `<script>${patchedJs}</script>`);
 
@@ -1755,7 +1813,14 @@
 
   // ─── 앱 초기화 엔트리 ───
   function init() {
-    // 1. 하객 뷰 체크 (#invite= 해시 존재 여부)
+    // 1. 부모 창에 커튼 오픈 이벤트 리스너 등록
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.action === 'curtain-opened') {
+        state.curtainOpened = true;
+      }
+    });
+
+    // 2. 하객 뷰 체크 (#invite= 해시 존재 여부)
     const hash = window.location.hash;
     if (hash && hash.startsWith('#invite=')) {
       document.body.classList.add('guest-view');
@@ -1776,7 +1841,7 @@
       return; // 더 이상 에디터 로직을 실행하지 않음
     }
 
-    // 2. 에디터 뷰 초기화
+    // 3. 에디터 뷰 초기화
     initTabs();
     initDeviceControls();
     bindFormInputs();
