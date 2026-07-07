@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>러브레터 - 모바일 청첩장 빌더</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="builder-app">
+    <!-- ═══ 왼쪽: 빌더 컨트롤 패널 ═══ -->
+    <aside class="control-panel">
+      <header class="panel-header">
+        <div class="logo">
+          <i class="fa-solid fa-envelope-open-text heart-icon"></i>
+          <h1>러브레터 <span>모바일 청첩장 빌더</span></h1>
+        </div>
+        <p class="subtitle">세상에 단 하나뿐인 우리만의 모바일 청첩장을 만들어보세요.</p>
+      </header>
+
+      <!-- 탭 내비게이션 -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="theme-tab">
+          <i class="fa-solid fa-palette"></i> 테마 & 효과
+        </button>
+        <button class="tab-btn" data-tab="info-tab">
+          <i class="fa-solid fa-user-friends"></i> 인적 사항
+        </button>
+        <button class="tab-btn" data-tab="schedule-tab">
+          <i class="fa-solid fa-calendar-alt"></i> 일정 & 장소
+        </button>
+        <button class="tab-btn" data-tab="images-tab">
+          <i class="fa-solid fa-images"></i> 사진 업로드
+        </button>
+        <button class="tab-btn" data-tab="accounts-tab">
+          <i class="fa-solid fa-credit-card"></i> 축의금 계좌
+        </button>
+      </nav>
+
+      <!-- 탭 콘텐츠 영역 -->
+      <div class="tab-content-container">
+        
+        <!-- ─── 탭 1: 테마 & 효과 ─── -->
+        <section class="tab-content active" id="theme-tab">
+          <h2 class="section-title">청첩장 테마 설정</h2>
+          <div class="theme-selector-grid">
+            <label class="theme-card active">
+              <input type="radio" name="theme-choice" value="warm" checked>
+              <div class="theme-preview warm-theme-bg">
+                <span class="theme-font-preview font-serif">웜</span>
+              </div>
+              <span class="theme-name">오리지널 웜</span>
+            </label>
+            
+            <label class="theme-card">
+              <input type="radio" name="theme-choice" value="minimal">
+              <div class="theme-preview minimal-theme-bg">
+                <span class="theme-font-preview font-sans">미니멀</span>
+              </div>
+              <span class="theme-name">모던 미니멀</span>
+            </label>
+            
+            <label class="theme-card">
+              <input type="radio" name="theme-choice" value="green">
+              <div class="theme-preview green-theme-bg">
+                <span class="theme-font-preview font-serif-green">그린</span>
+              </div>
+              <span class="theme-name">내추럴 그린</span>
+            </label>
+          </div>
+
+          <h2 class="section-title margin-top-lg">스페셜 연출 효과</h2>
+          <div class="toggle-group">
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <h3>꽃잎 휘날림 효과</h3>
+                <p>청첩장 배경에 흩날리는 벚꽃 잎 연출을 사용합니다.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="effect-petals" checked>
+                <span class="slider round"></span>
+              </label>
+            </div>
+
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <h3>인트로 커튼 애니메이션</h3>
+                <p>처음 접속 시 양옆으로 커튼이 열리는 연출을 사용합니다.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="effect-curtain" checked>
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </div>
+
+          <h2 class="section-title margin-top-lg">링크 공유(카카오톡) 정보 설정</h2>
+          <div class="form-group">
+            <label for="meta-title">공유 제목</label>
+            <input type="text" id="meta-title" value="신랑 ♥ 신부의 모바일 청첩장" placeholder="예: 신랑 OOO ♥ 신부 OOO 결혼식에 초대합니다">
+          </div>
+          <div class="form-group">
+            <label for="meta-desc">공유 설명</label>
+            <input type="text" id="meta-desc" value="소중한 분들을 초대합니다. 꼭 오셔서 축하해 주세요." placeholder="간략한 초대의 글">
+          </div>
+        </section>
+
+        <!-- ─── 탭 2: 인적 사항 ─── -->
+        <section class="tab-content" id="info-tab">
+          <!-- 신랑 정보 -->
+          <div class="card-form">
+            <h3 class="form-card-title"><span class="badge groom-badge">신랑</span> 신랑측 정보</h3>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="groom-name">신랑 이름</label>
+                <input type="text" id="groom-name" value="이몽룡" placeholder="신랑 이름">
+              </div>
+              <div class="form-group col-6">
+                <label for="groom-phone">신랑 연락처</label>
+                <input type="tel" id="groom-phone" value="010-1234-5678" placeholder="예: 010-1234-5678">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="groom-father">아버지 성함</label>
+                <input type="text" id="groom-father" value="이한림" placeholder="신랑 아버지 성함">
+              </div>
+              <div class="form-group col-6 checkbox-align">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="groom-father-deceased">
+                  <span>故 (고인 표기)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="groom-mother">어머니 성함</label>
+                <input type="text" id="groom-mother" value="향단이" placeholder="신랑 어머니 성함">
+              </div>
+              <div class="form-group col-6 checkbox-align">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="groom-mother-deceased">
+                  <span>故 (고인 표기)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 신부 정보 -->
+          <div class="card-form margin-top-md">
+            <h3 class="form-card-title"><span class="badge bride-badge">신부</span> 신부측 정보</h3>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="bride-name">신부 이름</label>
+                <input type="text" id="bride-name" value="성춘향" placeholder="신부 이름">
+              </div>
+              <div class="form-group col-6">
+                <label for="bride-phone">신부 연락처</label>
+                <input type="tel" id="bride-phone" value="010-5678-1234" placeholder="예: 010-5678-1234">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="bride-father">아버지 성함</label>
+                <input type="text" id="bride-father" value="성참판" placeholder="신부 아버지 성함">
+              </div>
+              <div class="form-group col-6 checkbox-align">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="bride-father-deceased">
+                  <span>故 (고인 표기)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="bride-mother">어머니 성함</label>
+                <input type="text" id="bride-mother" value="월매" placeholder="신부 어머니 성함">
+              </div>
+              <div class="form-group col-6 checkbox-align">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="bride-mother-deceased">
+                  <span>故 (고인 표기)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 초대 문구 -->
+          <div class="card-form margin-top-md">
+            <h3 class="form-card-title">초대의 글</h3>
+            <div class="form-group">
+              <label for="story-title">제목</label>
+              <input type="text" id="story-title" value="소중한 분들을 초대합니다" placeholder="인사말 제목">
+            </div>
+            <div class="form-group">
+              <label for="story-content">내용</label>
+              <textarea id="story-content" rows="6" placeholder="여기에 초대 문구를 작성하세요.">서로 다른 색으로 살아온 두 사람이
+이제 하나의 그림을 그려가려 합니다.
+
+저희의 새로운 시작을 함께해 주시고
+축복해 주시면 감사하겠습니다.
+
+소중한 걸음으로 자리를 빛내주시기 바랍니다.</textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── 탭 3: 일정 & 장소 ─── -->
+        <section class="tab-content" id="schedule-tab">
+          <div class="card-form">
+            <h3 class="form-card-title">일정 정보</h3>
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label for="wedding-date">예식 날짜</label>
+                <input type="date" id="wedding-date" value="2026-10-24">
+              </div>
+              <div class="form-group col-6">
+                <label for="wedding-time">예식 시간</label>
+                <input type="time" id="wedding-time" value="12:30">
+              </div>
+            </div>
+          </div>
+
+          <div class="card-form margin-top-md">
+            <h3 class="form-card-title">예식 장소</h3>
+            <div class="form-group">
+              <label for="wedding-venue">예식장 이름 (식장/홀)</label>
+              <input type="text" id="wedding-venue" value="사랑웨딩 컨벤션 3층 그랜드홀" placeholder="예: OO컨벤션 1층 그랜드볼룸">
+            </div>
+            <div class="form-group">
+              <label for="wedding-address">식장 주소</label>
+              <input type="text" id="wedding-address" value="서울시 중구 세종대로 110" placeholder="예식장의 실제 주소">
+            </div>
+          </div>
+
+          <div class="card-form margin-top-md">
+            <h3 class="form-card-title">길찾기 앱 연동 링크</h3>
+            <p class="form-tip"><i class="fa-solid fa-info-circle"></i> 지도 및 네비게이션 앱으로 바로 연결할 경로 링크를 등록하세요.</p>
+            <div class="form-group">
+              <label for="map-kakao"><i class="fa-solid fa-map-pin" style="color: #fee500;"></i> 카카오맵 링크</label>
+              <input type="url" id="map-kakao" value="https://map.kakao.com/?urlX=506223&urlY=1130955&name=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C%EC%B2%AD" placeholder="카카오맵 공유 링크 URL">
+            </div>
+            <div class="form-group">
+              <label for="map-naver"><i class="fa-solid fa-map-location-dot" style="color: #03c75a;"></i> 네이버 지도 링크</label>
+              <input type="url" id="map-naver" value="https://map.naver.com/v5/entry/place/11584428" placeholder="네이버지도 공유 링크 URL">
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── 탭 4: 사진 업로드 ─── -->
+        <section class="tab-content" id="images-tab">
+          <div class="card-form">
+            <h3 class="form-card-title">메인 대표 이미지 (Hero)</h3>
+            <p class="form-tip">청첩장 최상단 메인에 노출될 대표 사진입니다. (권장: 세로 비율)</p>
+            <div class="upload-dropzone" id="dropzone-hero">
+              <input type="file" id="upload-hero" accept="image/*" class="file-input">
+              <div class="upload-prompt">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <p>여기로 사진을 드래그하거나 클릭하여 업로드</p>
+                <span>JPG, PNG 파일 지원</span>
+              </div>
+              <div class="thumbnail-preview hidden">
+                <img src="" alt="메인 사진 미리보기">
+                <button type="button" class="btn-remove-img" data-type="hero"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 12px; margin-bottom: 0;">
+              <label for="img-url-hero">또는 이미지 웹 주소 (URL) 입력</label>
+              <input type="url" id="img-url-hero" placeholder="https://example.com/hero.jpg">
+            </div>
+          </div>
+
+          <div class="card-form margin-top-md">
+            <h3 class="form-card-title">스토리 서브 이미지</h3>
+            <p class="form-tip">초대의 글 문구 위나 아래에 연출용으로 배치될 서브 이미지입니다.</p>
+            <div class="upload-dropzone" id="dropzone-story">
+              <input type="file" id="upload-story" accept="image/*" class="file-input">
+              <div class="upload-prompt">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <p>스토리 사진 업로드</p>
+                <span>인사말 주변에 배치되는 서브 컷</span>
+              </div>
+              <div class="thumbnail-preview hidden">
+                <img src="" alt="스토리 사진 미리보기">
+                <button type="button" class="btn-remove-img" data-type="story"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 12px; margin-bottom: 0;">
+              <label for="img-url-story">또는 이미지 웹 주소 (URL) 입력</label>
+              <input type="url" id="img-url-story" placeholder="https://example.com/story.jpg">
+            </div>
+          </div>
+
+          <div class="card-form margin-top-md">
+            <h3 class="form-card-title">갤러리 사진 등록 (다중 선택 가능)</h3>
+            <p class="form-tip">갤러리 그리드에 표시되며 클릭 시 라이트박스 뷰어로 확대되는 사진들입니다.</p>
+            <div class="upload-dropzone" id="dropzone-gallery">
+              <input type="file" id="upload-gallery" accept="image/*" multiple class="file-input">
+              <div class="upload-prompt">
+                <i class="fa-solid fa-images upload-icon"></i>
+                <p>여러 장의 사진을 선택하거나 이 영역으로 드래그</p>
+                <span>다중 이미지 업로드 가능</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 12px; margin-bottom: 0;">
+              <label for="img-url-gallery">또는 이미지 웹 주소 (URL) 입력 (쉼표로 구분)</label>
+              <input type="text" id="img-url-gallery" placeholder="https://url1.jpg, https://url2.jpg">
+            </div>
+            
+            <!-- 갤러리 썸네일 리스트 -->
+            <div class="gallery-thumbs-list" id="gallery-thumbs-container">
+              <!-- JS에서 썸네일 동적으로 렌더링 -->
+            </div>
+          </div>
+
+          <div class="card-form margin-top-md">
+            <h3 class="form-card-title">식장 약도 이미지</h3>
+            <p class="form-tip">오시는 길 섹션 주소 아래에 들어갈 약도 및 안내 이미지입니다.</p>
+            <div class="upload-dropzone" id="dropzone-location">
+              <input type="file" id="upload-location" accept="image/*" class="file-input">
+              <div class="upload-prompt">
+                <i class="fa-solid fa-map upload-icon"></i>
+                <p>약도/오시는 길 이미지 업로드</p>
+                <span>(약도 그림 파일 혹은 정적 지도 스크린샷)</span>
+              </div>
+              <div class="thumbnail-preview hidden">
+                <img src="" alt="약도 미리보기">
+                <button type="button" class="btn-remove-img" data-type="location"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 12px; margin-bottom: 0;">
+              <label for="img-url-location">또는 이미지 웹 주소 (URL) 입력</label>
+              <input type="url" id="img-url-location" placeholder="https://example.com/map.jpg">
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── 탭 5: 축의금 계좌 ─── -->
+        <section class="tab-content" id="accounts-tab">
+          <div class="alert-info-box">
+            <i class="fa-solid fa-circle-info"></i>
+            <div>
+              <strong>계좌 정보 등록 안내</strong>
+              <p>신랑측 및 신부측의 축의금 송금용 계좌번호를 편리하게 관리하세요. 모바일 청첩장에서 터치 한 번으로 바로 복사되는 클립보드 기능이 탑재됩니다.</p>
+            </div>
+          </div>
+
+          <!-- 신랑측 계좌 -->
+          <div class="card-form margin-top-md">
+            <div class="card-form-header">
+              <h3 class="form-card-title"><span class="badge groom-badge">신랑측</span> 마음 전할 계좌</h3>
+              <button type="button" class="btn-add-account" data-target="groom"><i class="fa-solid fa-plus-circle"></i> 계좌 추가</button>
+            </div>
+            <div class="accounts-list-container" id="groom-accounts-list">
+              <!-- JS에서 생성 -->
+            </div>
+          </div>
+
+          <!-- 신부측 계좌 -->
+          <div class="card-form margin-top-md">
+            <div class="card-form-header">
+              <h3 class="form-card-title"><span class="badge bride-badge">신부측</span> 마음 전할 계좌</h3>
+              <button type="button" class="btn-add-account" data-target="bride"><i class="fa-solid fa-plus-circle"></i> 계좌 추가</button>
+            </div>
+            <div class="accounts-list-container" id="bride-accounts-list">
+              <!-- JS에서 생성 -->
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- 빌더 하단 고정 제어 영역 -->
+      <footer class="builder-footer">
+        <button class="btn-action btn-download" id="btn-copy-share-link">
+          <i class="fa-solid fa-share-nodes"></i> 청첩장 공유 링크 복사
+        </button>
+      </footer>
+    </aside>
+
+    <!-- ═══ 오른쪽: 실시간 프리뷰 영역 ═══ -->
+    <main class="preview-area">
+      <!-- 뷰 크기 조절기 -->
+      <div class="preview-toolbar">
+        <span class="preview-status"><span class="pulse-dot"></span> Live Preview</span>
+        <div class="view-toggles">
+          <button class="toolbar-btn active" id="btn-view-mobile" title="모바일 뷰"><i class="fa-solid fa-mobile-screen-button"></i></button>
+          <button class="toolbar-btn" id="btn-view-tablet" title="태블릿 뷰"><i class="fa-solid fa-tablet-screen-button"></i></button>
+          <button class="toolbar-btn" id="btn-reset-curtain" title="커튼 애니메이션 다시보기"><i class="fa-solid fa-rotate-left"></i> 인트로 리셋</button>
+        </div>
+      </div>
+
+      <!-- 가상 모바일 디바이스 Mockup -->
+      <div class="device-container" id="device-wrapper">
+        <div class="device-bezel">
+          <!-- 스피커 & 센서 (노치) -->
+          <div class="device-notch">
+            <span class="camera"></span>
+            <span class="speaker"></span>
+          </div>
+          
+          <!-- 스크린 화면 (Iframe 탑재) -->
+          <div class="device-screen">
+            <iframe id="preview-iframe" src="about:blank" title="청첩장 실시간 미리보기"></iframe>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 토스트 알림창 -->
+  <div id="builder-toast" class="builder-toast"></div>
+
+  <!-- JS -->
+  <script src="app.js"></script>
+</body>
+</html>
