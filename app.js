@@ -677,7 +677,7 @@
     };
 
     // 1. 설정 객체(CONFIG) 주입
-    html = html.replace(/<script src="config.js"><\/script>/i, () => `<script>const CONFIG = ${JSON.stringify(configObj)};</script>`);
+    html = html.replace(/<script\s+[^>]*src=["']config\.js["'][^>]*><\/script>/i, () => `<script>const CONFIG = ${JSON.stringify(configObj)};</script>`);
 
     // 2. CSS 인라인화 및 경로 수정
     let resolvedCss = css.replace(/url\((['"]?)images\//g, `url($1${pathPrefix}images/`);
@@ -689,7 +689,7 @@
         letter-spacing: clamp(2px, 1.5vw, 8px) !important;
       }
     `;
-    html = html.replace(/<link rel="stylesheet" href="styles.css">/i, () => `<style>${resolvedCss}</style>`);
+    html = html.replace(/<link\s+[^>]*href=["']styles\.css["'][^>]*>/i, () => `<style>${resolvedCss}</style>`);
 
     // 3. JS 인라인화 및 이미지 감지 가로채기
     let patchedJs = js
@@ -736,7 +736,7 @@
       });
     `;
 
-    html = html.replace(/<script src="script.js"><\/script>/i, () => `<script>${patchedJs}</script>`);
+    html = html.replace(/<script\s+[^>]*src=["']script\.js["'][^>]*><\/script>/i, () => `<script>${patchedJs}</script>`);
 
     return html;
   }
