@@ -114,6 +114,25 @@
       }
       updatePreview(true);
     });
+
+    // 모바일 뷰 전용 탭 토글
+    const btnEdit = $('#tab-btn-edit');
+    const btnPreview = $('#tab-btn-preview');
+    const appContainer = $('.builder-app');
+
+    if (btnEdit && btnPreview) {
+      btnEdit.addEventListener('click', () => {
+        btnEdit.classList.add('active');
+        btnPreview.classList.remove('active');
+        appContainer.classList.remove('show-preview-mode');
+      });
+
+      btnPreview.addEventListener('click', () => {
+        btnPreview.classList.add('active');
+        btnEdit.classList.remove('active');
+        appContainer.classList.add('show-preview-mode');
+      });
+    }
   }
 
   // ─── 폼 입력 필드 바인딩 ───
