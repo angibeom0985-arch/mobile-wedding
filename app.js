@@ -565,10 +565,29 @@
       return DEFAULT_PLACEHOLDERS.some(p => url.includes(p));
     }
 
-    const heroImg = isPlaceholder(data.images.hero) ? "" : data.images.hero;
-    const storyImg = isPlaceholder(data.images.story) ? "" : data.images.story;
-    const galleryImgs = (data.images.gallery || []).filter(img => !isPlaceholder(img));
-    const locationImg = isPlaceholder(data.images.location) ? "" : data.images.location;
+    const defaultHero = `${pathPrefix}images/hero/1.jpg`;
+    const defaultStory = [
+      `${pathPrefix}images/story/1.jpg`,
+      `${pathPrefix}images/story/2.jpg`
+    ];
+    const defaultGallery = Array.from({ length: 22 }, (_, i) => `${pathPrefix}images/gallery/${i + 1}.jpg`);
+    const defaultLocation = `${pathPrefix}images/location/1.jpg`;
+    const defaultOg = `${pathPrefix}images/og/1.jpg`;
+
+    const heroImg = isPlaceholder(data.images.hero) ? defaultHero : data.images.hero;
+    
+    let storyImgList = defaultStory;
+    if (data.images.story && !isPlaceholder(data.images.story)) {
+      storyImgList = [data.images.story];
+    }
+
+    let galleryImgList = defaultGallery;
+    const userGallery = (data.images.gallery || []).filter(img => !isPlaceholder(img));
+    if (userGallery.length > 0) {
+      galleryImgList = userGallery;
+    }
+
+    const locationImg = isPlaceholder(data.images.location) ? defaultLocation : data.images.location;
 
     const groomFullName = data.groom.name || "";
     const groomLastName = groomFullName.charAt(0);
@@ -650,10 +669,10 @@
       effectPetals: data.effectPetals,
       images: {
         hero: heroImg,
-        story: storyImg ? [storyImg] : [],
-        gallery: galleryImgs,
+        story: storyImgList,
+        gallery: galleryImgList,
         location: locationImg,
-        og: heroImg
+        og: heroImg || defaultOg
       }
     };
 
