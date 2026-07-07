@@ -535,13 +535,19 @@
     const pathPrefix = `templates/${template}/`;
 
     let html, css, js;
-    try {
-      html = await fetchTemplateFile(`${pathPrefix}index.html`);
-      css = await fetchTemplateFile(`${pathPrefix}styles.css`);
-      js = await fetchTemplateFile(`${pathPrefix}script.js`);
-    } catch (e) {
-      console.error('Template loading failed:', e);
-      return `<h1>테마 로딩에 실패했습니다.</h1><p>${e.message}</p>`;
+    if (typeof TEMPLATES_DATA !== 'undefined' && TEMPLATES_DATA[template]) {
+      html = TEMPLATES_DATA[template].html;
+      css = TEMPLATES_DATA[template].css;
+      js = TEMPLATES_DATA[template].js;
+    } else {
+      try {
+        html = await fetchTemplateFile(`${pathPrefix}index.html`);
+        css = await fetchTemplateFile(`${pathPrefix}styles.css`);
+        js = await fetchTemplateFile(`${pathPrefix}script.js`);
+      } catch (e) {
+        console.error('Template loading failed:', e);
+        return `<h1>테마 로딩에 실패했습니다.</h1><p>${e.message}</p>`;
+      }
     }
 
     const DEFAULT_PLACEHOLDERS = [
@@ -624,6 +630,10 @@
       greeting: {
         title: data.story.title,
         content: data.story.content
+      },
+      invitation: {
+        title: data.story.title,
+        message: data.story.content
       },
       story: {
         title: "우리의 이야기",
