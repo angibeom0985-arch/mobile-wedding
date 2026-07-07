@@ -7,7 +7,7 @@
 
   // ─── 애플리케이션 상태 관리 (State) ───
   const state = {
-    theme: 'warm',
+    theme: 'original-warm',
     effectPetals: true,
     effectCurtain: true,
     metaTitle: '신랑 ♥ 신부의 모바일 청첩장',
@@ -433,7 +433,7 @@
     });
   }
 
-  // 갤러리 썸네일 그리기
+  // ─── 갤러리 썸네일 그리기 ───
   function renderGalleryThumbs() {
     const container = $('#gallery-thumbs-container');
     container.innerHTML = '';
@@ -467,77 +467,191 @@
     }, 2500);
   }
 
-  // ─── 실시간 프리뷰 돔 동기화 ───
+  // ─── 실시간 프리뷰 렌더링 ───
   let updateTimeout = null;
 
-  function updatePreview(forceReload = false) {
+  async function updatePreview(forceReload = false) {
     const iframe = $('#preview-iframe');
     if (!iframe) return;
 
     if (forceReload || !iframe.dataset.initialized) {
-      // 강제 리로드 또는 최초 로드 시 srcdoc 작성
-      const html = generateInvitationHtml(state);
-      iframe.srcdoc = html;
-      iframe.dataset.initialized = 'true';
+      try {
+        const html = await generateInvitationHtml(state);
+        iframe.srcdoc = html;
+        iframe.dataset.initialized = 'true';
+      } catch (e) {
+        console.error('Preview update error:', e);
+      }
     } else {
-      // 디바운스를 활용해 가볍게 돔 엘리먼트 값들만 포스트 메시지 혹은 직접 동기화 실행
       clearTimeout(updateTimeout);
-      updateTimeout = setTimeout(() => {
+      updateTimeout = setTimeout(async () => {
         try {
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          if (doc) {
-            // 인적 정보 업데이트
-            const g = state.groom;
-            const b = state.bride;
-            const w = state.wedding;
-            
-            const gNames = doc.querySelectorAll('.groom-name-txt');
-            gNames.forEach(el => el.textContent = g.name);
-            
-            const bNames = doc.querySelectorAll('.bride-name-txt');
-            bNames.forEach(el => el.textContent = b.name);
-            
-            // 날짜 및 일정 정보 갱신
-            const timeEl = doc.getElementById('preview-date-time');
-            if (timeEl) {
-              timeEl.textContent = formatDateTimeString(w.date, w.time);
-            }
-            
-            const venueEl = doc.getElementById('preview-venue-name');
-            if (venueEl) venueEl.textContent = w.venue;
-            
-            const addrEl = doc.getElementById('preview-address');
-            if (addrEl) addrEl.textContent = w.address;
-
-            // 초대글 업데이트
-            const stTitle = doc.getElementById('preview-story-title');
-            if (stTitle) stTitle.textContent = state.story.title;
-            const stContent = doc.getElementById('preview-story-content');
-            if (stContent) stContent.textContent = state.story.content;
-            
-            // 지도 링크
-            const kBtn = doc.getElementById('preview-kakao-btn');
-            if (kBtn) kBtn.href = w.mapLinks.kakao;
-            const nBtn = doc.getElementById('preview-naver-btn');
-            if (nBtn) nBtn.href = w.mapLinks.naver;
-
-            // 디데이 카운트다운 대상 시간 전달
-            iframe.contentWindow.postMessage({
-              action: 'update-state',
-              date: w.date,
-              time: w.time,
-              groomName: g.name,
-              brideName: b.name,
-              venue: w.venue,
-              address: w.address
-            }, '*');
-          }
+          const html = await generateInvitationHtml(state);
+          iframe.srcdoc = html;
         } catch (e) {
-          console.warn('Iframe DOM direct sync fail, fallback to srcdoc reload.', e);
-          iframe.srcdoc = generateInvitationHtml(state);
+          console.error('Preview update error:', e);
         }
-      }, 50);
+      }, 300);
     }
+  }
+
+  // ─── 템플릿 파일 로더 ───
+  async function fetchTemplateFile(path) {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${path}`);
+    }
+    return response.text();
+  }
+
+  // ─── 계좌 관계자 이름 자동 매핑 ───
+  function mapAccounts(list, name, father, mother) {
+    if (!list) return [];
+    return list.map(acc => {
+      let accName = '';
+      const role = acc.role || '';
+      if (role.includes('신랑') || role.includes('신부')) {
+        accName = name;
+      } else if (role.includes('부') || role.includes('아버지')) {
+        accName = father;
+      } else if (role.includes('모') || role.includes('어머니')) {
+        accName = mother;
+      }
+      return {
+        role: acc.role || '',
+        name: accName,
+        bank: acc.bank || '',
+        number: acc.number || ''
+      };
+    });
+  }
+
+  // ─── 템플릿 조립기 (HTML Compiler) ───
+  async function generateInvitationHtml(data) {
+    const template = data.theme || 'original-warm';
+    const pathPrefix = `templates/${template}/`;
+
+    let html, css, js;
+    try {
+      html = await fetchTemplateFile(`${pathPrefix}index.html`);
+      css = await fetchTemplateFile(`${pathPrefix}styles.css`);
+      js = await fetchTemplateFile(`${pathPrefix}script.js`);
+    } catch (e) {
+      console.error('Template loading failed:', e);
+      return `<h1>테마 로딩에 실패했습니다.</h1><p>${e.message}</p>`;
+    }
+
+    const DEFAULT_PLACEHOLDERS = [
+      'photo-1519741497674-611481863552',
+      'photo-1583939003579-730e3918a45a',
+      'photo-1511285560929-80b456fea0bc',
+      'photo-1465495976277-4387d4b0b4c6',
+      'photo-1519225495810-7512c696505a',
+      'photo-1522673607200-164d1b6ce486',
+      'photo-1524661135-423995f22d0b'
+    ];
+
+    function isPlaceholder(url) {
+      if (!url) return true;
+      return DEFAULT_PLACEHOLDERS.some(p => url.includes(p));
+    }
+
+    const heroImg = isPlaceholder(data.images.hero) ? "" : data.images.hero;
+    const storyImg = isPlaceholder(data.images.story) ? "" : data.images.story;
+    const galleryImgs = (data.images.gallery || []).filter(img => !isPlaceholder(img));
+    const locationImg = isPlaceholder(data.images.location) ? "" : data.images.location;
+
+    const groomAcc = mapAccounts(data.groom.accounts, data.groom.name, data.groom.father, data.groom.mother);
+    const brideAcc = mapAccounts(data.bride.accounts, data.bride.name, data.bride.father, data.bride.mother);
+
+    const configObj = {
+      useCurtain: data.effectCurtain,
+      groom: {
+        name: data.groom.name,
+        nameEn: "Groom",
+        father: data.groom.father,
+        mother: data.groom.mother,
+        fatherDeceased: data.groom.fatherDeceased,
+        motherDeceased: data.groom.motherDeceased
+      },
+      bride: {
+        name: data.bride.name,
+        nameEn: "Bride",
+        father: data.bride.father,
+        mother: data.bride.mother,
+        fatherDeceased: data.bride.fatherDeceased,
+        motherDeceased: data.bride.motherDeceased
+      },
+      wedding: {
+        date: data.wedding.date,
+        time: data.wedding.time,
+        venue: data.wedding.venue,
+        hall: "",
+        address: data.wedding.address,
+        tel: data.groom.phone,
+        mapLinks: {
+          kakao: data.wedding.mapLinks.kakao,
+          naver: data.wedding.mapLinks.naver
+        }
+      },
+      greeting: {
+        title: data.story.title,
+        content: data.story.content
+      },
+      story: {
+        title: "우리의 이야기",
+        content: data.story.content
+      },
+      accounts: {
+        groom: groomAcc,
+        bride: brideAcc
+      },
+      meta: {
+        title: data.metaTitle,
+        description: data.metaDesc
+      },
+      effectPetals: data.effectPetals,
+      images: {
+        hero: heroImg,
+        story: storyImg ? [storyImg] : [],
+        gallery: galleryImgs,
+        location: locationImg,
+        og: heroImg
+      }
+    };
+
+    // 1. 설정 객체(CONFIG) 주입
+    html = html.replace(/<script src="config.js"><\/script>/i, () => `<script>const CONFIG = ${JSON.stringify(configObj)};</script>`);
+
+    // 2. CSS 인라인화 및 경로 수정
+    const resolvedCss = css.replace(/url\((['"]?)images\//g, `url($1${pathPrefix}images/`);
+    html = html.replace(/<link rel="stylesheet" href="styles.css">/i, () => `<style>${resolvedCss}</style>`);
+
+    // 3. JS 인라인화 및 이미지 감지 가로채기
+    let patchedJs = js
+      .replace(
+        /function loadImagesFromFolder\s*\(\s*folder\s*,\s*maxAttempts\s*=\s*\d+\s*\)\s*\{/g,
+        `function loadImagesFromFolder(folder, maxAttempts = 50) {
+          if (typeof CONFIG !== 'undefined' && CONFIG.images && CONFIG.images[folder] && CONFIG.images[folder].length > 0) {
+            return Promise.resolve(CONFIG.images[folder]);
+          }`
+      )
+      .replace(
+        /function initPetals\s*\(\s*\)\s*\{/g,
+        `function initPetals() {
+          if (typeof CONFIG !== 'undefined' && CONFIG.effectPetals === false) return;`
+      )
+      .replace(/'images\/hero\/1\.jpg'/g, `(CONFIG.images.hero || '${pathPrefix}images/hero/1.jpg')`)
+      .replace(/"images\/hero\/1\.jpg"/g, `(CONFIG.images.hero || '${pathPrefix}images/hero/1.jpg')`)
+      .replace(/'images\/location\/1\.jpg'/g, `(CONFIG.images.location || '${pathPrefix}images/location/1.jpg')`)
+      .replace(/"images\/location\/1\.jpg"/g, `(CONFIG.images.location || '${pathPrefix}images/location/1.jpg')`)
+      .replace(/'images\/og\/1\.jpg'/g, `(CONFIG.images.og || '${pathPrefix}images/og/1.jpg')`)
+      .replace(/"images\/og\/1\.jpg"/g, `(CONFIG.images.og || '${pathPrefix}images/og/1.jpg')`)
+      .replace(/`images\/\${folder}\/\${current}\.jpg`/g, `\`\${CONFIG.images[folder] && CONFIG.images[folder][current-1] ? CONFIG.images[folder][current-1] : '${pathPrefix}images/' + folder + '/' + current + '.jpg' }\``);
+
+    html = html.replace(/<script src="script.js"><\/script>/i, () => `<script>${patchedJs}</script>`);
+
+    return html;
   }
 
   // ─── 캘린더용 날짜 문자열 변환 ───
@@ -555,209 +669,6 @@
     const h12 = hours % 12 || 12;
     const minStr = String(minutes).padStart(2, '0');
     return `${year}년 ${month}월 ${date}일 (${day}) ${period} ${h12}시 ${minStr}분`;
-  }
-
-  // ─── 단일 HTML 파일 포장기 ───
-  function generateInvitationHtml(data) {
-    const petalStyles = data.effectPetals ? `
-    /* 벚꽃 잎 날림 스타일 */
-    .petals-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 99;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .petal {
-      position: absolute;
-      background: linear-gradient(135deg, #ffd3e2 0%, #ffb6c1 100%);
-      border-radius: 50% 0 50% 50%;
-      opacity: 0.8;
-      pointer-events: none;
-      animation: fall linear forwards;
-    }
-    @keyframes fall {
-      0% {
-        transform: translateY(-20px) rotate(0deg) skewX(0deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 0.8;
-      }
-      90% {
-        opacity: 0.8;
-      }
-      100% {
-        transform: translateY(105vh) rotate(540deg) skewX(20deg);
-        opacity: 0;
-      }
-    }
-    ` : '';
-
-    const curtainStyles = data.effectCurtain ? `
-    /* 커튼 인트로 효과 */
-    .curtain-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 9999;
-      display: flex;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-    }
-    .curtain {
-      width: 50%;
-      height: 100%;
-      background: repeating-linear-gradient(
-        90deg,
-        #fbf9f6 0px,
-        #f5f1ea 15px,
-        #fbf9f6 30px,
-        #efeae0 45px,
-        #fbf9f6 60px
-      );
-      box-shadow: inset 0 0 40px rgba(0,0,0,0.04);
-      transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
-    }
-    .curtain-left {
-      border-right: 1px solid rgba(0,0,0,0.08);
-      transform-origin: left;
-    }
-    .curtain-right {
-      border-left: 1px solid rgba(0,0,0,0.08);
-      transform-origin: right;
-    }
-    .curtain-overlay.open .curtain-left {
-      transform: translateX(-100%);
-    }
-    .curtain-overlay.open .curtain-right {
-      transform: translateX(100%);
-    }
-    .curtain-overlay.hidden {
-      display: none !important;
-    }
-    ` : '';
-
-    // 테마별 고유 CSS 변수 및 스타일 스키마
-    let themeCss = '';
-    if (data.theme === 'warm') {
-      themeCss = `
-        :root {
-          --bg-wedding: #faf9f7;
-          --bg-alt: #f3ece4;
-          --color-text-main: #5a544f;
-          --color-text-muted: #8e857c;
-          --color-accent: #b89f8d;
-          --font-family: 'Noto Serif KR', serif;
-          --border-radius: 8px;
-        }
-        .main-invitation {
-          box-shadow: 0 4px 30px rgba(184, 159, 141, 0.15);
-        }
-        .section-title {
-          font-family: 'Noto Serif KR', serif;
-          font-weight: 500;
-          color: var(--color-text-main);
-          border-bottom: 1px solid var(--bg-alt);
-          padding-bottom: 15px;
-          margin-bottom: 24px;
-        }
-      `;
-    } else if (data.theme === 'minimal') {
-      themeCss = `
-        :root {
-          --bg-wedding: #ffffff;
-          --bg-alt: #f5f5f5;
-          --color-text-main: #111111;
-          --color-text-muted: #666666;
-          --color-accent: #000000;
-          --font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-          --border-radius: 2px;
-        }
-        .section-title {
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          font-size: 16px;
-          color: var(--color-text-main);
-          margin-bottom: 24px;
-        }
-        .main-invitation {
-          border: 1px solid #eee;
-        }
-      `;
-    } else if (data.theme === 'green') {
-      themeCss = `
-        :root {
-          --bg-wedding: #f4f6f4;
-          --bg-alt: #e3eae2;
-          --color-text-main: #2b4c3f;
-          --color-text-muted: #697d74;
-          --color-accent: #8fa08b;
-          --font-family: 'Noto Serif KR', serif;
-          --border-radius: 16px;
-        }
-        .main-invitation {
-          box-shadow: 0 10px 40px rgba(43, 76, 63, 0.08);
-        }
-        .section-title {
-          font-family: 'Noto Serif KR', serif;
-          font-weight: 500;
-          color: var(--color-text-main);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          margin-bottom: 24px;
-        }
-        .section-title::before, .section-title::after {
-          content: '✿';
-          font-size: 11px;
-          color: var(--color-accent);
-        }
-      `;
-    }
-
-    // 계좌 아코디언 HTML 데이터 생성
-    const buildAccountsHtml = (accList) => {
-      if (!accList || accList.length === 0) {
-        return '<p class="no-accounts">등록된 계좌가 없습니다.</p>';
-      }
-      return accList.map(acc => `
-        <div class="account-item">
-          <div class="account-info">
-            <span class="account-role">${acc.role}</span>
-            <div class="account-details">
-              <span class="bank-name">${acc.bank}</span>
-              <span class="account-number">${acc.number}</span>
-            </div>
-          </div>
-          <button class="btn-copy-account" data-clipboard="${acc.bank} ${acc.number}">복사</button>
-        </div>
-      `).join('');
-    };
-
-    const groomAccHtml = buildAccountsHtml(data.groom.accounts);
-    const brideAccHtml = buildAccountsHtml(data.bride.accounts);
-
-    // 부모 정보 포맷
-    const parentSpan = (name, deceased) => deceased ? `<span class="parent-name deceased">${name}</span>` : `<span class="parent-name">${name}</span>`;
-
-    // 갤러리 그리드 사진 HTML
-    const galleryHtml = data.images.gallery && data.images.gallery.length > 0 
-      ? data.images.gallery.map((src, idx) => `
-        <div class="gallery-item" onclick="openPhotoViewer(${idx})">
-          <img src="${src}" alt="갤러리 사진 ${idx + 1}" loading="lazy">
-        </div>
-      `).join('')
-      : '<p class="no-photo-msg">업로드된 사진이 없습니다.</p>';
-
-    // 갤러리 배열 문자열 주입 (전체화면 뷰어용)
     const galleryArrayStr = JSON.stringify(data.images.gallery || []);
 
     return `<!DOCTYPE html>
